@@ -1,17 +1,11 @@
 package org.firstinspires.ftc.teamcode.Tests;
 import org.openftc.easyopencv.OpenCvPipeline;
+import java.io.FileOutputStream;
+import java.io.File;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.opencv.core.Core;
 import org.opencv.core.CvType;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
-import org.openftc.easyopencv.OpenCvPipeline;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
@@ -41,10 +35,8 @@ import java.io.IOException;
 
 import static android.graphics.Bitmap.createBitmap;
 import static android.graphics.Bitmap.createScaledBitmap;
-import java.util.ArrayList;
-import java.util.List;
 
-public class TestOpencv extends OpenCvPipeline {
+public class TestOpencv_Copy2_Copy extends OpenCvPipeline {
 
     private int width; // width of the image
     Telemetry telemetry;
@@ -62,7 +54,7 @@ public class TestOpencv extends OpenCvPipeline {
      *
 //     * @param width The width of the image (check your camera)
      */
-    public TestOpencv(Telemetry t) {
+    public TestOpencv_Copy2_Copy(Telemetry t) {
         telemetry=t;
 //        this.telemetry=telemetry;
     }
@@ -86,16 +78,11 @@ public class TestOpencv extends OpenCvPipeline {
         // Imgproc.GaussianBlur(mat,dst,new Size(5,5),1);
 //        Imgproc.(mat, input,new Size(3,3));
         // if something is wrong, we assume there's no skystone
-        if (mat.empty()) {
-//            location = SkystoneLocation.NONE;
-            return input;
-        }
-
-        // We create a HSV range for yellow to detect regular stones
+                // We create a HSV range for yellow to detect regular stones
         // NOTE: In OpenCV's implementation,
         // Hue values are half the real value
-        Scalar lowHSV = new Scalar(105,120,0); // lower bound HSV for yellow
-        Scalar highHSV = new Scalar(123,355, 355);  // higher bound HSV for yellow
+        Scalar lowHSV = new Scalar(15,80,0); // lower bound HSV for yellow
+        Scalar highHSV = new Scalar(26,355, 355);  // higher bound HSV for yellow
         Mat thresh = new Mat();
 
         // We'll get a black and white image. The white regions represent the regular stones.
@@ -181,7 +168,7 @@ public class TestOpencv extends OpenCvPipeline {
 //            telemetry.update();
 
 
-            if (boundRect[i].width >20 && boundRect[i].height >190 &&boundRect[i].width < 1000&&boundRect[i].height <1000)
+            if (boundRect[i].width >50 && boundRect[i].height >50&&boundRect[i].y>350)
             {
                 Imgproc.rectangle(mat, boundRect[i], new Scalar(175, 255, 255), 4);
                 this.x = boundRect[i].x;
@@ -189,13 +176,22 @@ public class TestOpencv extends OpenCvPipeline {
                 this.width = boundRect[i].width;
                 this.height = boundRect[i].height;
 
-                if (full_location != 1) {
+                
                     telemetry.addData("Width:", boundRect[i].width);
                     telemetry.addData("Height:", boundRect[i].height);
                     telemetry.addData("Y:", this.y);
                     telemetry.addData("x:", this.x);
                     telemetry.update();
-                }
+                    
+            //         Bitmap bitmap = Bitmap.createBitmap(1280, 960, Bitmap.Config.RGB_565);
+            //         bitmap.copyPixelsFromBuffer(mat.getPixels());
+            //         bitmap = createBitmap(bitmap, 0, 0, 1280, 960); //Cropped Bitmap to show only stones
+
+            //         FileOutputStream out = null;
+            //         File file = new File(path, "bitmapName");
+            //         out = new FileOutputStream(file);
+            //         bitmap.compress(Bitmap.CompressFormat.PNG, 100, out);
+            // bitmap = createBitmap(bitmap, 0, 0, 1280, 960);//Cropped Bitmap to show only stones
 
             }
  
@@ -218,9 +214,13 @@ public class TestOpencv extends OpenCvPipeline {
 //        else location = SkystoneLocation.NONE;
 
 //        return mat;`
-        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_HSV2RGB);
-                            Imgcodecs.imwrite(Environment.getExternalStorageDirectory().toString()+"/"+y+"mat.jpg",mat);
+        // Imgproc.cvtColor(mat, mat, Imgproc.COLOR_HSV2RGB);
+        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_HSV2BGR);
+                    
+                    Imgcodecs.imwrite(Environment.getExternalStorageDirectory().toString()+"/"+y+"mat.jpg",mat);
                     Imgcodecs.imwrite(Environment.getExternalStorageDirectory().toString()+"/"+y+"thresh.jpg",thresh);
+
+                    
         return mat;// return the mat with rectangles drawn
     }
 

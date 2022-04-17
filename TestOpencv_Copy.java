@@ -12,39 +12,11 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvPipeline;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
-import org.openftc.easyopencv.OpenCvPipeline;
-import org.opencv.imgcodecs.Imgcodecs;
-import java.util.ArrayList;
-import java.util.List;
-import android.graphics.Bitmap;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import android.graphics.Color;
-import android.os.Environment;
 
-import com.vuforia.Image;
-import com.vuforia.PIXEL_FORMAT;
-import com.vuforia.Vuforia;
-
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-import static android.graphics.Bitmap.createBitmap;
-import static android.graphics.Bitmap.createScaledBitmap;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestOpencv extends OpenCvPipeline {
+public class TestOpencv_Copy extends OpenCvPipeline {
 
     private int width; // width of the image
     Telemetry telemetry;
@@ -62,7 +34,7 @@ public class TestOpencv extends OpenCvPipeline {
      *
 //     * @param width The width of the image (check your camera)
      */
-    public TestOpencv(Telemetry t) {
+    public TestOpencv_Copy(Telemetry t) {
         telemetry=t;
 //        this.telemetry=telemetry;
     }
@@ -94,8 +66,8 @@ public class TestOpencv extends OpenCvPipeline {
         // We create a HSV range for yellow to detect regular stones
         // NOTE: In OpenCV's implementation,
         // Hue values are half the real value
-        Scalar lowHSV = new Scalar(105,120,0); // lower bound HSV for yellow
-        Scalar highHSV = new Scalar(123,355, 355);  // higher bound HSV for yellow
+        Scalar lowHSV = new Scalar(0,120,0); // lower bound HSV for yellow
+        Scalar highHSV = new Scalar(4,355, 355);  // higher bound HSV for yellow
         Mat thresh = new Mat();
 
         // We'll get a black and white image. The white regions represent the regular stones.
@@ -192,7 +164,7 @@ public class TestOpencv extends OpenCvPipeline {
                 if (full_location != 1) {
                     telemetry.addData("Width:", boundRect[i].width);
                     telemetry.addData("Height:", boundRect[i].height);
-                    telemetry.addData("Y:", this.y);
+                    telemetry.addData("Y:", this.x);
                     telemetry.addData("x:", this.x);
                     telemetry.update();
                 }
@@ -218,9 +190,7 @@ public class TestOpencv extends OpenCvPipeline {
 //        else location = SkystoneLocation.NONE;
 
 //        return mat;`
-        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_HSV2RGB);
-                            Imgcodecs.imwrite(Environment.getExternalStorageDirectory().toString()+"/"+y+"mat.jpg",mat);
-                    Imgcodecs.imwrite(Environment.getExternalStorageDirectory().toString()+"/"+y+"thresh.jpg",thresh);
+//        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_HSV2RGB);
         return mat;// return the mat with rectangles drawn
     }
 

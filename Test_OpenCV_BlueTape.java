@@ -12,6 +12,18 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvPipeline;
+import org.opencv.imgproc.Imgproc;
+import org.openftc.easyopencv.OpenCvPipeline;
+import org.opencv.imgcodecs.Imgcodecs;
+import java.util.ArrayList;
+import java.util.List;
+import org.openftc.easyopencv.OpenCvPipeline;
+import java.io.FileOutputStream;
+import java.io.File;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.opencv.core.Core;
+import org.opencv.core.CvType;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.MatOfPoint2f;
@@ -41,10 +53,8 @@ import java.io.IOException;
 
 import static android.graphics.Bitmap.createBitmap;
 import static android.graphics.Bitmap.createScaledBitmap;
-import java.util.ArrayList;
-import java.util.List;
 
-public class TestOpencv extends OpenCvPipeline {
+public class Test_OpenCV_BlueTape extends OpenCvPipeline {
 
     private int width; // width of the image
     Telemetry telemetry;
@@ -57,13 +67,14 @@ public class TestOpencv extends OpenCvPipeline {
     int full_location=0;
     private int Integer;
     private float floating;
-
+private int lowRangeValue;
     /**
      *
 //     * @param width The width of the image (check your camera)
      */
-    public TestOpencv(Telemetry t) {
+    public Test_OpenCV_BlueTape(Telemetry t, int lowRangeValue) {
         telemetry=t;
+        this.lowRangeValue = lowRangeValue;
 //        this.telemetry=telemetry;
     }
     int length=0;
@@ -94,7 +105,7 @@ public class TestOpencv extends OpenCvPipeline {
         // We create a HSV range for yellow to detect regular stones
         // NOTE: In OpenCV's implementation,
         // Hue values are half the real value
-        Scalar lowHSV = new Scalar(105,120,0); // lower bound HSV for yellow
+        Scalar lowHSV = new Scalar(105,lowRangeValue,0); // lower bound HSV for yellow
         Scalar highHSV = new Scalar(123,355, 355);  // higher bound HSV for yellow
         Mat thresh = new Mat();
 
@@ -151,8 +162,8 @@ public class TestOpencv extends OpenCvPipeline {
         this.height=0;
         this.width=0;
         this.y=0;
-        this.maxwidth=7;
-        this.maxheight=50;
+        this.maxwidth=100;
+        this.maxheight=50*2;
 //        this.full_location=0;
         for (int i = 0; i != boundRect.length; i++) {
             // draw red bounding rectangles on mat
@@ -181,7 +192,7 @@ public class TestOpencv extends OpenCvPipeline {
 //            telemetry.update();
 
 
-            if (boundRect[i].width >20 && boundRect[i].height >190 &&boundRect[i].width < 1000&&boundRect[i].height <1000)
+            if (boundRect[i].width >20 && boundRect[i].height >190 &&boundRect[i].width < 1000&&boundRect[i].height <1000 && ((boundRect[i].x > 400 && boundRect[i].y < 300)|| (lowRangeValue == 105 && boundRect[i].y > 500)|| (lowRangeValue==100 && boundRect[i].y > 500)) )
             {
                 Imgproc.rectangle(mat, boundRect[i], new Scalar(175, 255, 255), 4);
                 this.x = boundRect[i].x;
@@ -201,7 +212,8 @@ public class TestOpencv extends OpenCvPipeline {
  
 //            telemetry.addData("Area:",width1*height);
 //            telemetry.update();
-//            if (i==1){
+//            if (i==1)
+//            {
 //                telemetry.addData(String.format("label (%d)", i),i);
 //                telemetry.update();
 //                sleep(250);
@@ -216,11 +228,13 @@ public class TestOpencv extends OpenCvPipeline {
         // since our team's camera can only detect two at a time
         // we will need to scan the next 2 stones
 //        else location = SkystoneLocation.NONE;
+        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_HSV2BGR);
+                    
+                    // Imgcodecs.imwrite(Environment.getExternalStorageDirectory().toString()+"/"+y+"carousel_mat.jpg",mat);
+                    // Imgcodecs.imwrite(Environment.getExternalStorageDirectory().toString()+"/"+y+"carousel_thresh.jpg",thresh);
 
 //        return mat;`
-        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_HSV2RGB);
-                            Imgcodecs.imwrite(Environment.getExternalStorageDirectory().toString()+"/"+y+"mat.jpg",mat);
-                    Imgcodecs.imwrite(Environment.getExternalStorageDirectory().toString()+"/"+y+"thresh.jpg",thresh);
+//        Imgproc.cvtColor(mat, mat, Imgproc.COLOR_HSV2RGB);
         return mat;// return the mat with rectangles drawn
     }
 
@@ -230,7 +244,7 @@ public class TestOpencv extends OpenCvPipeline {
 //    }
     public double getArea(){
         full_location=1;
-        return this.height;}
+        return this.width;}
     public double getPostitionY()
     {   full_location=1;
     // telemetry.addData("this.x", this.x);

@@ -1,13 +1,23 @@
 package org.firstinspires.ftc.teamcode.Tests;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import com.qualcomm.hardware.bosch.BNO055IMU;
+import java.lang.annotation.Target;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ReadWriteFile;
-
+import android.os.Environment;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import static android.graphics.Bitmap.createBitmap;
+import static android.graphics.Bitmap.createScaledBitmap;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
@@ -18,19 +28,26 @@ import org.opencv.core.Point;
 
 import java.io.File;
 
-@Autonomous(name="Calibration2")
-public class Calibiration2 extends LinearOpMode {
+@Autonomous(name="AlignmentToFreight")
+public class AlignmentToSH_Copy2 extends LinearOpMode {
     // Handle hardware stuff...
 
     int width = 960;
     int height = 720;//changed this
     // store as variable here so we can access the location
-    TestOpencv detector = new TestOpencv(telemetry);
+    TestOpencv_Copy2_Copy detector = new TestOpencv_Copy2_Copy(telemetry);
     OpenCvCamera phoneCam;
     DcMotor FL;
     DcMotor FR;
     DcMotor BL;
     DcMotor BR;
+    DcMotor Parl;
+    DcMotor Bask;
+    BNO055IMU imu;
+    NormalizedColorSensor colorSensor;
+    double TargetPositionY=0;
+    double TargetPositionArea=0;
+    double Pixelspeed=0;
     double first_valY=0;
     double second_valY=0;
     double third_valY=0;
@@ -42,7 +59,7 @@ public class Calibiration2 extends LinearOpMode {
     double differnceY;
     double cmY =60;
     double CmPerInchY;
-
+    double Inchestomove=0;
     double first_valX=0;
     double second_valX=0;
     double third_valX=0;
@@ -54,11 +71,8 @@ public class Calibiration2 extends LinearOpMode {
     double differnceX;
     double cmX =60;
     double CmPerInchX;
-    double before_Area=0;
-    double After_Area=0;
     private ElapsedTime runtime = new ElapsedTime();
-    double total=0;
-    int counter=0;
+    
     //while motors are busy dont perform next action
     private void waitUntilMotorsBusy()
     {
@@ -112,9 +126,9 @@ public class Calibiration2 extends LinearOpMode {
     public void turnClockwise()
     {
         FL.setDirection(DcMotorSimple.Direction.FORWARD);
-        FR.setDirection(DcMotorSimple.Direction.REVERSE);
+        FR.setDirection(DcMotorSimple.Direction.FORWARD);
         BL.setDirection(DcMotorSimple.Direction.FORWARD);
-        BR.setDirection(DcMotorSimple.Direction.REVERSE);
+        BR.setDirection(DcMotorSimple.Direction.FORWARD);
     }
     //go left
     public void  directionLeft()
@@ -153,10 +167,60 @@ public class Calibiration2 extends LinearOpMode {
         BL.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         BR.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
-    File CmperInchY = AppUtil.getInstance().getSettingsFile("Pixels/Inch.txt");
-    File Areabyinch = AppUtil.getInstance().getSettingsFile("Areabyinch.txt");
-    File star_val=AppUtil.getInstance().getSettingsFile("Start_val");
-    
+    private void nudgeToAngle(double target_angle)
+        {
+            Orientation angles;
+            angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            double current_angle = angles.firstAngle; //Because REV Hub is upside down
+
+            FL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            FR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            BL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            BR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            
+            
+            if (target_angle < current_angle)
+            {
+                FL.setDirection(DcMotorSimple.Direction.REVERSE);
+                FR.setDirection(DcMotorSimple.Direction.REVERSE);
+                BL.setDirection(DcMotorSimple.Direction.REVERSE);
+                BR.setDirection(DcMotorSimple.Direction.REVERSE);
+              
+            }
+            else
+            {
+                FL.setDirection(DcMotorSimple.Direction.FORWARD);
+                FR.setDirection(DcMotorSimple.Direction.FORWARD);
+                BL.setDirection(DcMotorSimple.Direction.FORWARD);
+                BR.setDirection(DcMotorSimple.Direction.FORWARD);
+            }
+
+            setWheelbasePower(0.2);
+            while (Math.abs(target_angle - current_angle) > 0.5)
+            {
+                telemetry.addData("IMU: ", "current %f, target %f", current_angle, target_angle);
+                telemetry.update();
+                angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+                current_angle = angles.firstAngle; //Because REV Hub is upside down
+            }
+            setWheelbasePower(0);
+            angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
+            current_angle = angles.firstAngle; //Because REV Hub is upside down
+            telemetry.addData("IMU: ", "FINAL HEADING %f", current_angle);
+            telemetry.update();
+            
+            sleep(100);
+        }
+    // File CmperInchY = AppUtil.getInstance().getSettingsFile("Pixels/Inch.txt");
+    // File CmperInchX = AppUtil.getInstance().getSettingsFile("Cm/InchX.txt");
+    // File star_val=AppUtil.getInstance().getSettingsFile("Start_val");
+    // File TargetPositionYFile=AppUtil.getInstance().getSettingsFile("TargetPositionY.txt");
+    // File TargetPositionAreaFile=AppUtil.getInstance().getSettingsFile("TargetPositionArea.txt");
+    // File Areabyinch = AppUtil.getInstance().getSettingsFile("Areabyinch.txt");
+    // double TargetPositionArea1=Double.parseDouble(ReadWriteFile.readFile(TargetPositionAreaFile).trim());
+    // double AreabyInch=Double.parseDouble(ReadWriteFile.readFile(Areabyinch).trim());
+    double currentarea=0;
+    double inchestogo=0;
     @Override
     public void runOpMode()
     {
@@ -169,8 +233,20 @@ public class Calibiration2 extends LinearOpMode {
       BR = hardwareMap.dcMotor.get("BR");
       FR = hardwareMap.dcMotor.get("FR");
       BL = hardwareMap.dcMotor.get("BL");
-int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
-        phoneCam =  OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "Webcam 1"), cameraMonitorViewId);
+      Parl = hardwareMap.dcMotor.get("Parl");
+      Bask = hardwareMap.dcMotor.get("Baskq");
+    //   colorSensor = hardwareMap.dcMotor.get("sensor_color");
+      BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.loggingEnabled      = false;
+        parameters.loggingTag          = "IMU";
+        // parameters.accelerationIntegrationAlgorithm = new JustLoggingAccelerationIntegrator();
+
+        imu = (BNO055IMU) hardwareMap.get("imu");
+        imu.initialize(parameters);
+      int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+        OpenCvCamera phoneCam = OpenCvCameraFactory.getInstance().createInternalCamera(OpenCvInternalCamera.CameraDirection.BACK, cameraMonitorViewId);
       
         // Connect to the camera
         
@@ -183,7 +259,7 @@ int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("c
                 phoneCam.setPipeline(detector);
 
                 
-                phoneCam.startStreaming(1280, height, OpenCvCameraRotation.UPRIGHT);
+                phoneCam.startStreaming(1280, 960, OpenCvCameraRotation.SIDEWAYS_LEFT);
                 // phoneCam.setFlashlightEnabled(true);
                 
             }
@@ -205,83 +281,135 @@ int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("c
 
         
         waitForStart();
-       
-        telemetry.addData("before Y",detector.getArea());
-        telemetry.update();
-        first_valY=detector.getPostitionY();
-        sleep(67);
-        second_valY=detector.getPostitionY();
-        sleep(67);
-        third_valY=detector.getPostitionY();
-        sleep(67);
-        fourth_valY=detector.getPostitionY();
-        sleep(67);
-        fifth_valY=detector.getPostitionY();
-        final_valY=((first_valY+second_valY+third_valY+fourth_valY+fifth_valY)/5);
-        telemetry.addData("FinalArea:",final_valY);
-        telemetry.update();
-        
-    
-        sleep(3000);
-        Premov();
+        sleep(1000);
         FL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         FR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        directionLeft();
-        setTargetPosition(79*12);
-        FR.setPower(0.5);
-        FL.setPower(0.5);
-        BR.setPower(0.5);
-        BL.setPower(0.5);    
-        while (FL.isBusy() && FR.isBusy() && BL.isBusy() && BR.isBusy())
-            {}
-            setWheelbasePower(0.0);
-                // Display it for the driver.
-        double lastCmPerInch=CmPerInchY;
-        sleep(3000);
-                 telemetry.addData("After Y",detector.getArea());
-        telemetry.update();
-        first_valY=detector.getPostitionY();
-        sleep(67);
-        second_valY=detector.getPostitionY();
-        sleep(67);
-        third_valY=detector.getPostitionY();
-        sleep(67);
-        fourth_valY=detector.getPostitionY();
-        sleep(67);
-        fifth_valY=detector.getPostitionY();
+        
+        FL.setDirection(DcMotorSimple.Direction.REVERSE);
+        FR.setDirection(DcMotorSimple.Direction.REVERSE);
+        BL.setDirection(DcMotorSimple.Direction.REVERSE);
+        BR.setDirection(DcMotorSimple.Direction.REVERSE);
+        
+        FL.setPower(0.15);
+        FR.setPower(0.15);
+        BL.setPower(0.15);
+        BR.setPower(0.15);
+        while(detector.getPostitionY()>=887||detector.getPostitionY()==0){
+            telemetry.addData("FinalY:",detector.getPostitionY());
+            telemetry.update();
+        }
+        setWheelbasePower(0.0);
+        //         Parl.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        // Parl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        //         Parl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //         Parl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        //         Parl.setDirection(DcMotorSimple.Direction.REVERSE);
+        //         Parl.setTargetPosition((int)3290);
+        //         Parl.setPower(1.0);
+        //         sleep(50);
+     
+
+            // sleep(100);
+        sleep(750);
+        first_valY=detector.getArea();
         // sleep(67);
+        second_valY=detector.getArea();
+        // sleep(67);
+        third_valY=detector.getArea();
+        // sleep(67);
+        fourth_valY=detector.getArea();
+        // sleep(67);
+        fifth_valY=detector.getArea();
+        final_valY=((first_valY+second_valY+third_valY+fourth_valY+fifth_valY)/5.0);
+        double currentarea=final_valY;
+        first_valY=detector.getPostitionY();
+        // sleep(67);
+        second_valY=detector.getPostitionY();
+        // sleep(67);
+        third_valY=detector.getPostitionY();
+        // sleep(67);
+        fourth_valY=detector.getPostitionY();
+        // sleep(67);
+        fifth_valY=detector.getPostitionY();
         final_valY=((first_valY+second_valY+third_valY+fourth_valY+fifth_valY)/5);
-        telemetry.addData("FinalY:",final_valY);
+        telemetry.addData("FinalY:",first_valY);
+        // TargetPositionY = Double.parseDouble(ReadWriteFile.readFile(TargetPositionYFile).trim());
         
-         afterY=final_valY;
-        // sleep(300);
-        telemetry.addData("before Y",beforeY);
+        // Pixelspeed=Double.parseDouble(ReadWriteFile.readFile(CmperInchY).trim());
+        
+        
+        inchestogo=((300-currentarea)/11.5);
+        telemetry.addData("AreabyInch",inchestogo);
+        telemetry.addData("AreabyInch",currentarea);
+        double adjacent=(910-final_valY)/49;
+        telemetry.addData("adjacent",adjacent);
+        double angle=Math.abs(Math.toDegrees(Math.atan(inchestogo/adjacent)));
+        telemetry.addData("hypo", Math.sqrt(inchestogo*inchestogo+adjacent*adjacent));
+        double hypo=Math.sqrt(inchestogo*inchestogo+adjacent*adjacent);
+        double newPow=Math.abs((angle-45))/90;
+        telemetry.addData("angle", angle);
+        telemetry.addData("newPow", newPow);
+
         telemetry.update();
-        differnceY=afterY-beforeY;
-        CmPerInchY =differnceY/12;
-        telemetry.clear();
-        telemetry.addData("Cm/Inch:", CmPerInchY);
-        telemetry.update();
-        // ReadWriteFile.writeFile(Areabyinch, String.valueOf((-CmPerInchY)));
         
-            
+        // sleep(3000);
         
         
+        Bask.setPower(-1);
+        
+        Premov();
+        FL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE );
+        FR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        BL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        BR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        directionBack();
+        
+        setTargetPosition((int)(inchestogo*79));
+        
+               FL.setPower(1.0/9);
+      FR.setPower(1.0/9);
+      BL.setPower(1.0/9);
+      BR.setPower(1.0/9);
+      while(FL.isBusy()){
+          
+         } 
+          
+           
+           
+      
+        // setTargetPosition((int)(adjacent*79));
        
-        sleep(2000);
-        // telemetry.addData("Average Cm/Inch",total/counter);
+         
+                            
+           
+           
+      final_valY=detector.getPostitionY();
+      currentarea=detector.getArea();
+        inchestogo=((416-currentarea)/11.5);
+        // telemetry.addData("AreabyInch",inchestogo);
+        // telemetry.addData("AreabyInch",currentarea);
+        adjacent=(900-final_valY)/49;
+        // telemetry.addData("adjacent",adjacent);
+        angle=Math.abs(Math.toDegrees(Math.atan(inchestogo/adjacent)));
+        newPow=Math.abs((angle-45))/90;
+        // telemetry.addData("angle", angle);
+        // telemetry.addData("newPow", newPow);
         // telemetry.update();
-        // sleep(3000);
-        // ReadWriteFile.writeFile(CmperInchY, String.valueOf(total/counter));
-        // sleep(3000);
-        // After_Area=detector.getArea();
-        // double AreabyInch=(After_Area-before_Area)/5;
-        // telemetry.addData("Area",AreabyInch);
-        // telemetry.update();
-        // sleep(3000);
-        // ReadWriteFile.writeFile(Areabyinch, String.valueOf(AreabyInch));
+                // setTargetPosition((int)((Math.sqrt(inchestogo*inchestogo+adjacent*adjacent))*79));
+
+       
+        
+        
+        
+        setWheelbasePower(0.0);
+        // while
+        sleep(1200);
+        Bask.setPower(0.0);
+        
         //X
         // sleep(24000);
         // telemetry.addData("before X",detector.getPostitionX());

@@ -1,7 +1,7 @@
 package org.firstinspires.ftc.teamcode.Tests;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -13,7 +13,11 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ReadWriteFile;
-
+import android.os.Environment;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import static android.graphics.Bitmap.createBitmap;
+import static android.graphics.Bitmap.createScaledBitmap;
 import org.firstinspires.ftc.robotcore.internal.system.AppUtil;
 import org.openftc.easyopencv.OpenCvCamera;
 import org.openftc.easyopencv.OpenCvCameraFactory;
@@ -24,8 +28,8 @@ import org.opencv.core.Point;
 
 import java.io.File;
 
-@Autonomous(name="AlignmentToSH_1")
-public class AlignmentToSH__1_ extends LinearOpMode {
+@Autonomous(name="Contniuos_SH_Alignment")
+public class Continuous_SH_Alignment extends LinearOpMode {
     // Handle hardware stuff...
 
     int width = 960;
@@ -40,6 +44,7 @@ public class AlignmentToSH__1_ extends LinearOpMode {
     DcMotor Parl;
     DcMotor Bask;
     BNO055IMU imu;
+    NormalizedColorSensor colorSensor;
     double TargetPositionY=0;
     double TargetPositionArea=0;
     double Pixelspeed=0;
@@ -190,11 +195,9 @@ public class AlignmentToSH__1_ extends LinearOpMode {
                 BR.setDirection(DcMotorSimple.Direction.FORWARD);
             }
 
-            setWheelbasePower(0.18);
+            setWheelbasePower(0.2);
             while (Math.abs(target_angle - current_angle) > 0.5)
             {
-                telemetry.addData("IMU: ", "current %f, target %f", current_angle, target_angle);
-                telemetry.update();
                 angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
                 current_angle = angles.firstAngle; //Because REV Hub is upside down
             }
@@ -230,6 +233,7 @@ public class AlignmentToSH__1_ extends LinearOpMode {
       BL = hardwareMap.dcMotor.get("BL");
       Parl = hardwareMap.dcMotor.get("Parl");
       Bask = hardwareMap.dcMotor.get("Baskq");
+    //   colorSensor = hardwareMap.dcMotor.get("sensor_color");
       BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
         parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
         parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
@@ -274,35 +278,47 @@ public class AlignmentToSH__1_ extends LinearOpMode {
         // Remember to change the camera rotation
 
         
-        waitForStart();
+        // waitForStart();
+        // sleep(1000);
+        // FL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        // FR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        // BL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        // BR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         
-      FL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        FR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        BL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        BR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        Premov();
-        FL.setDirection(DcMotorSimple.Direction.REVERSE);
-        FR.setDirection(DcMotorSimple.Direction.REVERSE);
-        BL.setDirection(DcMotorSimple.Direction.FORWARD);
-        BR.setDirection(DcMotorSimple.Direction.FORWARD);
-        setTargetPosition((int)33.5*79);
-        FL.setPower(1.0);
-        FR.setPower(1.0);
-        BL.setPower(0.22);
-        BR.setPower(0.22);
-        while(FL.isBusy()&&BL.isBusy()&&BR.isBusy()&&FR.isBusy())
-        {
-            if(!(Parl.isBusy()))
-            {
-                Parl.setPower(0.0);
-                
-            }
-        }
-        setWheelbasePower(0.0); 
-        nudgeToAngle(-90);
-            
+        // FL.setDirection(DcMotorSimple.Direction.REVERSE);
+        // FR.setDirection(DcMotorSimple.Direction.REVERSE);
+        // BL.setDirection(DcMotorSimple.Direction.REVERSE);
+        // BR.setDirection(DcMotorSimple.Direction.REVERSE);
+        
+        // FL.setPower(0.15);
+        // FR.setPower(0.15);
+        // BL.setPower(0.15);
+        // BR.setPower(0.15);
+        // while(detector.getPostitionY()>=887||detector.getPostitionY()==0){
+        //     telemetry.addData("FinalY:",detector.getPostitionY());
+        //     telemetry.update();
+        // }
+        // setWheelbasePower(0.0);
+                Parl.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            waitForStart();
+                Parl.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        Parl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                Parl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+                Parl.setMode(DcMotor.RunMode.RUN_TO_POSITION); 
+                Parl.setDirection(DcMotorSimple.Direction.REVERSE);
+                Parl.setTargetPosition((int)3390);
+                Parl.setPower(1.0);
+          while(Parl.isBusy())
+     {}
+                            Parl.setPower(0.0);
+
+
             // sleep(100);
-        sleep(325);
+            int iteration = 0;
+            boolean check = false;
+    while(true){
+        if (check) sleep(5100);
         first_valY=detector.getArea();
         // sleep(67);
         second_valY=detector.getArea();
@@ -329,64 +345,79 @@ public class AlignmentToSH__1_ extends LinearOpMode {
         
         // Pixelspeed=Double.parseDouble(ReadWriteFile.readFile(CmperInchY).trim());
         
+        FL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        FR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        BL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        BR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        FR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        FL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        BR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        BL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+       
+        //run using encoder
+        FL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        FR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        BL.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        BR.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        FL.setDirection(DcMotorSimple.Direction.REVERSE);
+        FR.setDirection(DcMotorSimple.Direction.REVERSE);
+        BL.setDirection(DcMotorSimple.Direction.REVERSE);
+        BR.setDirection(DcMotorSimple.Direction.REVERSE);
+        if (iteration == 2)
+        {
+                    FL.setDirection(DcMotorSimple.Direction.FORWARD);
+        FR.setDirection(DcMotorSimple.Direction.FORWARD);
+        BL.setDirection(DcMotorSimple.Direction.FORWARD);
+        BR.setDirection(DcMotorSimple.Direction.FORWARD);
         
-        inchestogo=((388-currentarea)/11.25);
+
+        }
+        FL.setPower(0.14);
+        FR.setPower(0.14);
+        BL.setPower(0.14);
+        BR.setPower(0.14);
+        while((iteration < 2 && detector.getPostitionY()>=1000) || (iteration == 2 && detector.getPostitionY() <= 887) ||detector.getPostitionY()==0)
+        {
+            telemetry.addData("FinalY:",detector.getPostitionY());
+            telemetry.update();
+            currentarea=detector.getArea();
+        }
+        setWheelbasePower(0.0);
+        sleep(1200);
+        currentarea=detector.getArea();
+            inchestogo= Math.abs((397-currentarea)/13.69);
         telemetry.addData("AreabyInch",inchestogo);
         telemetry.addData("AreabyInch",currentarea);
-        double adjacent=(888-final_valY)/47;
-        telemetry.addData("adjacent",adjacent);
-        double angle=Math.abs(Math.toDegrees(Math.atan(inchestogo/adjacent)));
-        telemetry.addData("hypo", Math.sqrt(inchestogo*inchestogo+adjacent*adjacent));
-        double newPow=Math.abs((angle-45))/90;
-        telemetry.addData("angle", angle);
-        telemetry.addData("newPow", newPow);
-
         telemetry.update();
         
-        // sleep(3000);
+        sleep(400);
         
+        if(currentarea<400){
         
-        
+        // nudgeToAngle(0.0);
+        // sleep(10000);
         Premov();
         FL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE );
         FR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         directionBack();
-        
-        setTargetPosition((int)((Math.sqrt(inchestogo*inchestogo+adjacent*adjacent))*79));
+
+                FL.setDirection(DcMotorSimple.Direction.REVERSE);
+        FR.setDirection(DcMotorSimple.Direction.FORWARD);
+        BL.setDirection(DcMotorSimple.Direction.REVERSE);
+        BR.setDirection(DcMotorSimple.Direction.FORWARD);
+
+        setTargetPosition((int)(inchestogo*79));
         // setTargetPosition((int)(adjacent*79));
-       while(FL.isBusy()){
-           if(fifth_valY>850)
-           {
-               FL.setPower(1.0);
-      FR.setPower(newPow);
-      BL.setPower(newPow);
-      BR.setPower(1.0);
-      
-           }
-           else{
-               FL.setPower(newPow);
-      FR.setPower(1.0);
-      BL.setPower(1.0);
-      BR.setPower(newPow);
-      if(FR.getCurrentPosition()>=(int)((Math.sqrt(inchestogo*inchestogo+adjacent*adjacent))*79))
-      {
-          
-          break;
-      }
-           }
+       while(FL.isBusy())
+       {
+            FL.setPower(1.0/4);
+            FR.setPower(1.0/4);
+            BL.setPower(1.0/4);
+            BR.setPower(1.0/4);
+        }
            
-           
-      final_valY=detector.getPostitionY();
-      currentarea=detector.getArea();
-        inchestogo=((416-currentarea)/12);
-        // telemetry.addData("AreabyInch",inchestogo);
-        // telemetry.addData("AreabyInch",currentarea);
-        adjacent=(900-final_valY)/48;
-        // telemetry.addData("adjacent",adjacent);
-        angle=Math.abs(Math.toDegrees(Math.atan(inchestogo/adjacent)));
-        newPow=Math.abs((angle-45))/90;
         // telemetry.addData("angle", angle);
         // telemetry.addData("newPow", newPow);
         // telemetry.update();
@@ -397,12 +428,11 @@ public class AlignmentToSH__1_ extends LinearOpMode {
         
         
         setWheelbasePower(0.0);
-        sleep(7);
-        nudgeToAngle(-90);
-        Bask.setPower(1.0);
-        sleep(8000);
-        Bask.setPower(0.0);
-        
+        sleep(270);
+        check = true;
+        // nudgeToAngle(0.0);
+        iteration++;
+        }
         //X
         // sleep(24000);
         // telemetry.addData("before X",detector.getPostitionX());
@@ -488,5 +518,86 @@ public class AlignmentToSH__1_ extends LinearOpMode {
 
         // more robot logic...
     }
+        // TargetPositionY = Double.parseDouble(ReadWriteFile.readFile(TargetPositionYFile).trim());
+        
+        // Pixelspeed=Double.parseDouble(ReadWriteFile.readFile(CmperInchY).trim());
+        
+        
 
+        // sleep(100);
+        // fourth_valX=detector.getPostitionX();
+        // sleep(100);
+        // fifth_valX=detector.getPostitionX();
+        // sleep(1000);
+        // final_valX=((first_valX+second_valX+third_valX+fourth_valX+fifth_valX)/5);
+        // telemetry.addData("FinalX:",final_valX);
+        // telemetry.update();
+        // beforeX=final_valX;
+        // sleep(7800);
+        // telemetry.addData("Go:","24 inches");
+        // telemetry.addData("after X",detector.getPostitionX());
+        // telemetry.update();
+        // sleep(18599);
+        // telemetry.addData("After X",detector.getPostitionX());
+        // telemetry.update();
+        // first_valX=detector.getPostitionX();
+        // sleep(100);
+        // second_valX=detector.getPostitionX();
+        // sleep(100);
+        // third_valX=detector.getPostitionX();
+        // sleep(100);
+        // fourth_valX=detector.getPostitionX();
+        // sleep(100);
+        // fifth_valX=detector.getPostitionX();
+        // sleep(1000);
+        // final_valY=((first_valX+second_valX+third_valX+fourth_valX+fifth_valX)/5);
+        // telemetry.addData("FinalX:",final_valX);
+        // telemetry.update();
+        // afterX=final_valX;
+        // sleep(3000);
+        // differnceX=afterX-beforeX;
+        // CmPerInchX =differnceX/ cmX;
+        // telemetry.addData("Cm/InchX:", CmPerInchX);
+        // telemetry.update();
+        // ReadWriteFile.writeFile(CmperInchX, String.valueOf(CmPerInchX));
+        // sleep(3000);
+
+//        telemetry.readMessage
+//        sleep(500);
+//        phoneCam.stopStreaming();
+//        beforeX=detector.PostitionX();
+//        beforeY=detector.PostitionY();
+//        telemetry.addData("X",beforeX);
+//        telemetry.addData("Y",beforeY);
+//        telemetry.update();
+//        sleep(1000);
+//        telemetry.addData("Go: ","24 inches");
+//        telemetry.update();
+//        sleep(3000);
+//        cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+//        phoneCam = OpenCvCameraFactory.getInstance().createInternalCamera(OpenCvInternalCamera.CameraDirection.BACK, cameraMonitorViewId);
+//        phoneCam.openCameraDevice();
+//        // Use the SkystoneDetector pipeline
+//        // processFrame() will be called to process the frame
+//        phoneCam.setPipeline(detector);
+//        // Remember to change the camera rotation
+//
+//        phoneCam.startStreaming(width, height, OpenCvCameraRotation.UPRIGHT);
+//        sleep(4000);
+//        phoneCam.stopStreaming();
+//        afterY=detector.PostitionY();
+//        afterX=detector.PostitionX();
+
+
+        //...
+
+//        SkystoneDetector.SkystoneLocation location = detector.getLocation();
+//        if (location != SkystoneDetector.SkystoneLocation.NONE) {
+//            // Move to the left / right
+//        } else {
+//            // Grab the skystone
+//        }
+
+        // more robot logic...
+    
 }

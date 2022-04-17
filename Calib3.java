@@ -18,11 +18,11 @@ import org.opencv.core.Point;
 
 import java.io.File;
 
-@Autonomous(name="Calibration2")
-public class Calibiration2 extends LinearOpMode {
+@Autonomous(name="Calibration3")
+public class Calib3 extends LinearOpMode {
     // Handle hardware stuff...
 
-    int width = 960;
+    int width = 1920;
     int height = 720;//changed this
     // store as variable here so we can access the location
     TestOpencv detector = new TestOpencv(telemetry);
@@ -183,7 +183,7 @@ int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("c
                 phoneCam.setPipeline(detector);
 
                 
-                phoneCam.startStreaming(1280, height, OpenCvCameraRotation.UPRIGHT);
+                phoneCam.startStreaming(width, height, OpenCvCameraRotation.UPRIGHT);
                 // phoneCam.setFlashlightEnabled(true);
                 
             }
@@ -208,15 +208,15 @@ int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("c
        
         telemetry.addData("before Y",detector.getArea());
         telemetry.update();
-        first_valY=detector.getPostitionY();
+        first_valY=detector.getArea();
         sleep(67);
-        second_valY=detector.getPostitionY();
+        second_valY=detector.getArea();
         sleep(67);
-        third_valY=detector.getPostitionY();
+        third_valY=detector.getArea();
         sleep(67);
-        fourth_valY=detector.getPostitionY();
+        fourth_valY=detector.getArea();
         sleep(67);
-        fifth_valY=detector.getPostitionY();
+        fifth_valY=detector.getArea();
         final_valY=((first_valY+second_valY+third_valY+fourth_valY+fifth_valY)/5);
         telemetry.addData("FinalArea:",final_valY);
         telemetry.update();
@@ -228,7 +228,7 @@ int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("c
         FR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BL.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         BR.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        directionLeft();
+        directionBack();
         setTargetPosition(79*12);
         FR.setPower(0.5);
         FL.setPower(0.5);
@@ -239,18 +239,17 @@ int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("c
             setWheelbasePower(0.0);
                 // Display it for the driver.
         double lastCmPerInch=CmPerInchY;
-        sleep(3000);
                  telemetry.addData("After Y",detector.getArea());
         telemetry.update();
-        first_valY=detector.getPostitionY();
+        first_valY=detector.getArea();
         sleep(67);
-        second_valY=detector.getPostitionY();
+        second_valY=detector.getArea();
         sleep(67);
-        third_valY=detector.getPostitionY();
+        third_valY=detector.getArea();
         sleep(67);
-        fourth_valY=detector.getPostitionY();
+        fourth_valY=detector.getArea();
         sleep(67);
-        fifth_valY=detector.getPostitionY();
+        fifth_valY=detector.getArea();
         // sleep(67);
         final_valY=((first_valY+second_valY+third_valY+fourth_valY+fifth_valY)/5);
         telemetry.addData("FinalY:",final_valY);
@@ -264,7 +263,7 @@ int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("c
         telemetry.clear();
         telemetry.addData("Cm/Inch:", CmPerInchY);
         telemetry.update();
-        // ReadWriteFile.writeFile(Areabyinch, String.valueOf((-CmPerInchY)));
+        ReadWriteFile.writeFile(Areabyinch, String.valueOf((-CmPerInchY)));
         
             
         

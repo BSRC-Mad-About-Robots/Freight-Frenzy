@@ -15,7 +15,7 @@ public class AutoMode2 extends LinearOpMode
     int width = 320;
     int height = 240;
     // store as variable here so we can access the location
-    SkystoneDetector detector = new SkystoneDetector(telemetry);
+    SkystoneDetector_Copy detector = new SkystoneDetector_Copy(telemetry);
     OpenCvCamera phoneCam;
 
     @Override

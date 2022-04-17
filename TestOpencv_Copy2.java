@@ -12,39 +12,11 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 import org.openftc.easyopencv.OpenCvPipeline;
-import org.opencv.core.Mat;
-import org.opencv.core.MatOfPoint;
-import org.opencv.core.MatOfPoint2f;
-import org.opencv.core.Rect;
-import org.opencv.core.Scalar;
-import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
-import org.openftc.easyopencv.OpenCvPipeline;
-import org.opencv.imgcodecs.Imgcodecs;
-import java.util.ArrayList;
-import java.util.List;
-import android.graphics.Bitmap;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import android.graphics.Color;
-import android.os.Environment;
 
-import com.vuforia.Image;
-import com.vuforia.PIXEL_FORMAT;
-import com.vuforia.Vuforia;
-
-import org.firstinspires.ftc.robotcore.external.navigation.VuforiaLocalizer;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-
-import static android.graphics.Bitmap.createBitmap;
-import static android.graphics.Bitmap.createScaledBitmap;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TestOpencv extends OpenCvPipeline {
+public class TestOpencv_Copy2 extends OpenCvPipeline {
 
     private int width; // width of the image
     Telemetry telemetry;
@@ -62,7 +34,7 @@ public class TestOpencv extends OpenCvPipeline {
      *
 //     * @param width The width of the image (check your camera)
      */
-    public TestOpencv(Telemetry t) {
+    public TestOpencv_Copy2(Telemetry t) {
         telemetry=t;
 //        this.telemetry=telemetry;
     }
@@ -83,7 +55,7 @@ public class TestOpencv extends OpenCvPipeline {
         Mat mat1 = new Mat();
         Imgproc.cvtColor(input, mat, Imgproc.COLOR_RGB2HSV);
         Mat dst = new Mat(mat.rows(),   mat.cols(),mat.type());
-        // Imgproc.GaussianBlur(mat,dst,new Size(5,5),1);
+        Imgproc.GaussianBlur(mat,dst,new Size(5,5),1);
 //        Imgproc.(mat, input,new Size(3,3));
         // if something is wrong, we assume there's no skystone
         if (mat.empty()) {
@@ -94,8 +66,8 @@ public class TestOpencv extends OpenCvPipeline {
         // We create a HSV range for yellow to detect regular stones
         // NOTE: In OpenCV's implementation,
         // Hue values are half the real value
-        Scalar lowHSV = new Scalar(105,120,0); // lower bound HSV for yellow
-        Scalar highHSV = new Scalar(123,355, 355);  // higher bound HSV for yellow
+        Scalar lowHSV = new Scalar(70,0,0); // lower bound HSV for yellow
+        Scalar highHSV = new Scalar(100,20, 355);  // higher bound HSV for yellow
         Mat thresh = new Mat();
 
         // We'll get a black and white image. The white regions represent the regular stones.
@@ -105,13 +77,13 @@ public class TestOpencv extends OpenCvPipeline {
 
         // Use Canny Edge Detection to find edges
         // you might have to tune the thresholds for hysteresis
-        // Imgproc.Canny(mat, edges, 300, 400);
+        Imgproc.Canny(thresh, edges, 100, 400);
 //        // https://docs.opencv.org/3.4/da/d0c/tutorial_bounding_rects_circles.html
 //        // Oftentimes the edges are disconnected. findContours connects these edges.
 //        // We then find the bounding rectangles of those contours
         List<MatOfPoint> contours = new ArrayList<>();
         Mat hierarchy = new Mat();
-        Imgproc.findContours(thresh, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
+        Imgproc.findContours(edges, contours, hierarchy, Imgproc.RETR_LIST, Imgproc.CHAIN_APPROX_SIMPLE);
         MatOfPoint2f[] contoursPoly  = new MatOfPoint2f[contours.size()];
         Rect[] boundRect = new Rect[contours.size()];
 
@@ -181,23 +153,23 @@ public class TestOpencv extends OpenCvPipeline {
 //            telemetry.update();
 
 
-            if (boundRect[i].width >20 && boundRect[i].height >190 &&boundRect[i].width < 1000&&boundRect[i].height <1000)
-            {
-                Imgproc.rectangle(mat, boundRect[i], new Scalar(175, 255, 255), 4);
-                this.x = boundRect[i].x;
-                this.y = boundRect[i].y;
-                this.width = boundRect[i].width;
-                this.height = boundRect[i].height;
+            // if (boundRect[i].width >1 && boundRect[i].height >20 &&boundRect[i].y > 220&&boundRect[i].height <1000)
+            // {
+            //     Imgproc.rectangle(mat, boundRect[i], new Scalar(175, 255, 255), 4);
+            //     this.x = boundRect[i].x;
+            //     this.y = boundRect[i].y;
+            //     this.width = boundRect[i].width;
+            //     this.height = boundRect[i].height;
 
-                if (full_location != 1) {
-                    telemetry.addData("Width:", boundRect[i].width);
-                    telemetry.addData("Height:", boundRect[i].height);
-                    telemetry.addData("Y:", this.y);
-                    telemetry.addData("x:", this.x);
-                    telemetry.update();
-                }
+            //     if (full_location != 1) {
+            //         telemetry.addData("Width:", boundRect[i].width);
+            //         telemetry.addData("Height:", boundRect[i].height);
+            //         telemetry.addData("Y:", this.x);
+            //         telemetry.addData("x:", this.y);
+            //         telemetry.update();
+            //     }
 
-            }
+            
  
 //            telemetry.addData("Area:",width1*height);
 //            telemetry.update();
@@ -219,9 +191,11 @@ public class TestOpencv extends OpenCvPipeline {
 
 //        return mat;`
         Imgproc.cvtColor(mat, mat, Imgproc.COLOR_HSV2RGB);
-                            Imgcodecs.imwrite(Environment.getExternalStorageDirectory().toString()+"/"+y+"mat.jpg",mat);
-                    Imgcodecs.imwrite(Environment.getExternalStorageDirectory().toString()+"/"+y+"thresh.jpg",thresh);
+// Imgproc.cvtColor(input, mat, Imgproc.COLOR_RGB2HSV);
         return mat;// return the mat with rectangles drawn
+        
+                
+
     }
 
 //    public int detection(){
